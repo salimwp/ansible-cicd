@@ -6,6 +6,7 @@ The target OS for this Ansible playbook is CentOS 7.7 . To launch this playbook 
 $ mkdir keys
 $ ssh-keygen -f keys/myKey
 $ python3 -m venv .
+$ source bin/activate
 $ pip3 install -r requirements.txt
 $ ansible-playbook -i hosts -k -K cicd.yaml
 ```
