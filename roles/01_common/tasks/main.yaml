@@ -1,0 +1,54 @@
+---
+
+- name: Setting hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+    
+- name: Setting timezone
+  timezone:
+    name: America/Toronto
+    
+- name: Installing chrony
+  yum:
+    name: chrony
+    state: latest
+    
+- name: Updating all packages
+  yum:
+    name: '*'
+    state: latest
+    
+# Found rpm query here: http://ftp.rpm.org/max-rpm/s1-rpm-query-handy-queries.html
+- name: Checking if new kernel was installed
+  shell: |
+        NEW_KERNEL=`rpm -q kernel --queryformat '%{installtime} %{version}-%{release}.%{arch}\n' | sort -n -k1 | tail -1 | cut -d ' ' -f 2`
+        CURRENT_KERNEL=`uname -r`
+        if [ $NEW_KERNEL = $CURRENT_KERNEL ];
+        then
+            exit 0
+        else
+            exit 1
+        fi
+  register: bootRequired
+  changed_when: bootRequired.rc != 0
+  failed_when: bootRequired.rc >= 2
+
+- name: Rebooting server
+  reboot:
+  when: bootRequired.rc != 0
+
+- name: Installing python firewall
+  yum:
+    name: ['python-firewall','firewalld']
+    state: present
+
+- name: Installing Python 3
+  yum:
+    name: ['python3']
+    state: present
+
+- name: Starting firewalld service
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes

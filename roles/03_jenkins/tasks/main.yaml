@@ -1,0 +1,45 @@
+---
+
+- name: Adding jenkins repo
+  shell: 
+    cmd: yum-config-manager --add-repo=http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+    creates: /etc/yum.repos.d/jenkins.repo
+
+- name: Importing Jenkins key
+  rpm_key:
+    key: https://jenkins-ci.org/redhat/jenkins-ci.org.key
+    state: present
+
+- name: Installing java and jenkins
+  yum:
+    name: ['java-1.8.0-openjdk', 'jenkins']
+    state: latest
+
+- name: Starting jenkings
+  systemd:
+    name: jenkins
+    state: started
+    enabled: yes
+
+- name: Opening Firewall port
+  firewalld:
+    port: 8080/tcp
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: Creating Jenkins ssh key
+  command: 
+    cmd: ssh-keygen -N '' -f /var/lib/jenkins/.ssh/id_rsa
+    creates: /var/lib/jenkins/.ssh/id_rsa
+  become_user: jenkins
+
+- pause:
+    minutes: 1
+
+- name: Grabbing initial admin
+  shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+  register: adminPassword
+
+- debug:
+    var: adminPassword.stdout

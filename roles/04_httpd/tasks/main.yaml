@@ -1,0 +1,33 @@
+---
+
+- name: Install apache and mod_ssl
+  yum:
+    name: ['httpd', 'mod_ssl']
+    state: latest
+
+- name: Transfer ssl.conf
+  copy:
+    src: ssl.conf
+    dest: /etc/httpd/conf.d/ssl.conf
+    mode: 0644
+    owner: root
+    group: root
+
+- name: Start httpd process
+  systemd:
+    name: httpd
+    state: started
+    enabled: yes
+
+- name: Open firewall port
+  firewalld:
+    service: https
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: Enabled SELinux rule for httpd
+  seboolean:
+    name: httpd_can_network_connect
+    state: yes
+    persistent: yes

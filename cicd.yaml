@@ -1,0 +1,12 @@
+---
+
+- name: Provisioning CICD server
+  hosts: all
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+  roles: 
+    - 01_common
+    - 02_git
+    - 03_jenkins
+    - 04_httpd

@@ -1,0 +1,33 @@
+---
+
+- name: Install git
+  yum:
+    name: git
+    state: latest
+
+- name: Create git-user for Fortinet
+  user:
+    name: git-fortinet
+    shell: /bin/git-shell
+    home: /srv/git-fortinet
+
+- name: Copying ssh keys
+  authorized_key:
+    user: git-fortinet
+    state: present
+    key: "{{ lookup('file', 'keys/myKey.pub') }}"
+
+- name: Fixing SELinux context to .ssh
+  sefcontext:
+    target: "/srv/git-fortinet/.ssh(/.*)?"
+    setype: ssh_home_t
+    state: present
+
+- name: Applying SELinux context
+  command: restorecon -irv /srv/git-fortinet
+
+- name: Initializing git-fortinet repo
+  command: 
+    cmd: git init --bare /srv/git-fortinet/fortinet-basic.git
+    creates: /srv/git-fortinet/fortinet-basic.git/description
+  become_user: git-fortinet
